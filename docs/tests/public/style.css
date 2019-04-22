@@ -1,0 +1,69 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto:300,400italic,300italic,400);
+
+body {
+  background: #212121;
+  color: #FAFAFA;
+  font-family: 'Roboto';
+  font-weight: 300;
+}
+
+.container {
+  width: 800px;
+  margin: 0 auto;
+}
+
+#menutest {
+  color: #D24D57;
+}
+
+.axis {
+  margin: 15px 13px;
+  float: left;
+  display: block;
+}
+
+.button {
+  margin: 15px 13px;
+  float: left;
+  display: block;
+  color: #3A539B;
+  width: 200px;
+  background: #333333;
+  height: 50px;
+  text-align: center;
+}
+
+.button span {
+  line-height: 25px;
+  display: block;
+}
+
+.button span.title {
+  color: #FAFAFA;
+}
+
+.title {
+  text-align: center;
+  color: #FAFAFA;
+}
+
+.title .info {
+  color: #3A539B;
+  font-weight: 400;
+}
+
+.joystick {
+  margin: 15px 13px;
+  float: left;
+  display: block;
+  width: 200px;
+  background: #333333;
+  height: 100px;
+  text-align: center;
+}
+
+.joystick span {
+  width: 100%;
+  display: block;
+  line-height: 25px;
+}
