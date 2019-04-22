@@ -11,20 +11,18 @@
 
 WiFiServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(WS_PORT);
+int axis_0 = 0;
 
-void moveX(uint increment) {
+
+inline void moveX(uint t, int direction) {
   int i = 0;
-  digitalWrite(DIR, HIGH);
-  increment += 100;
-  int time = (increment * 5);
-  Serial.println(time);
-  for(i = 1; i <= 25; i++) {
+  digitalWrite(DIR, direction);
+  for(i = 1; i <= 2; i++) {
     digitalWrite(STEP, HIGH);
-    delayMicroseconds(time);
+    delayMicroseconds(t);
     digitalWrite(STEP, LOW);
-    delayMicroseconds(time);
+    delayMicroseconds(t);
   }
-
 }
 
 /**websockets test**/
@@ -42,7 +40,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
           break;
         case WStype_BIN:
             Serial.println(payload[0]);
-            moveX(payload[0]);
+            axis_0 = payload[0];
             break;
     }
 
@@ -91,69 +89,92 @@ void setup() {
 }
 
 void loop() {
-  webSocket.loop();
-  // Check if a client has connected
-  WiFiClient client = server.available();
-  if (!client) {
-    return;
-  }
-
-  // Wait until the client sends some data
-  Serial.println("new client");
-  while(!client.available()){
-    delay(1);
-  }
-
-  // Read the first line of the request
-  String request = client.readStringUntil('\r');
-  Serial.println(request);
-  client.flush();
-
   // Match the request
   int i=0;
   int value = LOW;
 
-  if (request.indexOf("/Command=forward") != -1)  { //Move 50 steps forward
-    digitalWrite(DIR, HIGH); //Rotate stepper motor in clock wise direction
-    for( i=1; i<=50; i++) {
-      digitalWrite(STEP, HIGH);
-      delay(50);
-      digitalWrite(STEP, LOW);
-      delay(50);
+  webSocket.loop();
+  // Check if a client has connected
+  WiFiClient client = server.available();
+  if (client) {
+    // Wait until the client sends some data
+    Serial.println("new client");
+    while(!client.available()){
+      delay(1);
     }
-    value = HIGH;
+
+    // Read the first line of the request
+    String request = client.readStringUntil('\r');
+    Serial.println(request);
+    client.flush();
+
+    // Return the response
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-Type: text/html");
+    client.println(""); //  do not forget this one
+    client.println("<!DOCTYPE HTML>");
+    client.println("<html>");
+    client.println("<h1 align=center>Stepper motor controlled over WiFi</h1><br><br>");
+    client.print("Stepper motor moving= ");
+
+    if(value == HIGH) {
+      client.print("Forward");
+    } else {
+      client.print("Backward");
+    }
+    client.println("<br><br>");
+    client.println("<a href=\"/Command=forward\"\"><button>Forward </button></a>");
+    client.println("<a href=\"/Command=backward\"\"><button>Backward </button></a><br />");
+    client.println("</html>");
+    delay(1);
+    Serial.println("Client disonnected");
+    Serial.println("");
+
+    if (request.indexOf("/Command=forward") != -1)  { //Move 50 steps forward
+      digitalWrite(DIR, HIGH); //Rotate stepper motor in clock wise direction
+      for( i=1; i<=50; i++) {
+        digitalWrite(STEP, HIGH);
+        delay(50);
+        digitalWrite(STEP, LOW);
+        delay(50);
+      }
+      value = HIGH;
+    }
+
+    if (request.indexOf("/Command=backward") != -1)  { //Move 50 steps backwards
+      digitalWrite(DIR, LOW); //Rotate stepper motor in anti clock wise direction
+      for( i=1; i<=50; i++){
+      digitalWrite(STEP, HIGH);
+      delay(5);
+      digitalWrite(STEP, LOW);
+      delay(5);}
+      value = LOW;
+    }
   }
 
-  if (request.indexOf("/Command=backward") != -1)  { //Move 50 steps backwards
-    digitalWrite(DIR, LOW); //Rotate stepper motor in anti clock wise direction
-    for( i=1; i<=50; i++){
-    digitalWrite(STEP, HIGH);
-    delay(5);
-    digitalWrite(STEP, LOW);
-    delay(5);}
-    value = LOW;
+  if (axis_0 < 90) {
+    if (axis_0 < 10) {
+      moveX(300, 1);
+    } else if (axis_0 < 30) {
+      moveX(500, 1);
+    } else if (axis_0 < 50) {
+      moveX(700, 1);
+    } else if (axis_0 < 70) {
+      moveX(900, 1);
+    } else {
+      moveX(1200, 1);
+    }
+  } else if (axis_0 > 110) {
+    if (axis_0 > 190) {
+      moveX(300, 0);
+    } else if (axis_0 > 170) {
+      moveX(500, 0);
+    } else if (axis_0 > 150) {
+      moveX(700, 0);
+    } else if (axis_0 > 130) {
+      moveX(900, 0);
+    } else {
+      moveX(1200, 0);
+    }
   }
-
-  // Return the response
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/html");
-  client.println(""); //  do not forget this one
-  client.println("<!DOCTYPE HTML>");
-  client.println("<html>");
-  client.println("<h1 align=center>Stepper motor controlled over WiFi</h1><br><br>");
-  client.print("Stepper motor moving= ");
-
-  if(value == HIGH) {
-    client.print("Forward");
-  } else {
-    client.print("Backward");
-  }
-  client.println("<br><br>");
-  client.println("<a href=\"/Command=forward\"\"><button>Forward </button></a>");
-  client.println("<a href=\"/Command=backward\"\"><button>Backward </button></a><br />");
-  client.println("</html>");
-  delay(1);
-  Serial.println("Client disonnected");
-  Serial.println("");
-
 }
